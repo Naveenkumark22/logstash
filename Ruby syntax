@@ -40,3 +40,37 @@ array_list.each do |element|
   # Perform operations on 'element'
   puts "Processing element: #{element}"
 end
+
+
+-----------------------------------------------
+condition in looping
+
+input {
+  # Your input configuration
+}
+
+filter {
+  ruby {
+    code => "
+      # Sample array to iterate over
+      data_array = ['item1', 'item2', 'item3', 'item4', 'item5']
+
+      # Process each item in the array
+      data_array.each do |item|
+        # Check conditions and perform processing
+        if item.start_with?('item')
+          # Perform processing for items starting with 'item'
+          event.set('processed_item', item)
+        else
+          # Perform processing for items not starting with 'item'
+          event.set('skipped_item', item)
+        end
+      end
+    "
+  }
+}
+
+output {
+  # Your output configuration
+}
+
