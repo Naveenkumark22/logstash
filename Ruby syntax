@@ -73,4 +73,23 @@ filter {
 output {
   # Your output configuration
 }
+----------------------------------------------
+Map
+
+
+filter {
+  ruby {
+    code => "
+      # Declare a new empty map
+      my_map = {}
+
+      # Add key-value pairs to the map
+      my_map['key1'] = 'value1'
+      my_map['key2'] = 'value2'
+
+      # Add the map to the event
+      event.set('my_map_field', my_map)
+    "
+  }
+}
 
