@@ -37,6 +37,20 @@ filter {
     timeout => 5 # Set a timeout in seconds, adjust as needed
   }
 }
+----another method
+filter {
+  # Assuming you have a field named "selected_id" that contains the selected ID values
+  
+  # Initialize an empty ArrayList to store IDs
+  ruby {
+    code => 'event.set("id_list", [])'
+  }
+  
+  # Add the ID to the ArrayList
+  ruby {
+    code => 'id_list = event.get("id_list"); id_list << event.get("id"); event.set("id_list", id_list)'
+  }
+}
 
 output {
   # Write the aggregated list to a file
