@@ -1,0 +1,42 @@
+creation of arraylist and adding values in list
+
+filter {
+  ruby {
+    code => '
+      # Declare and initialize an array
+      id_list = []
+      
+      # Add the ID to the array
+      id_list << event.get("selected_id")
+      
+      # Set the array to a field
+      event.set("id_list", id_list)
+    '
+  }
+}
+
+--------------------------------------------------
+if condition 
+---------
+filter {
+  ruby {
+    code => '
+      if event.get("field_name") == "value"
+        event.set("new_field", "new_value")
+      elsif event.get("field_name") == "other_value"
+        event.set("another_field", "another_value")
+      else
+        event.set("default_field", "default_value")
+      end
+    '
+  }
+}
+
+----------------------------------------------------  
+arraylist looping 
+
+# Assume 'array_list' is your array list
+array_list.each do |element|
+  # Perform operations on 'element'
+  puts "Processing element: #{element}"
+end
