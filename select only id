@@ -1,0 +1,47 @@
+input {
+  # Your input configuration (e.g., Elasticsearch input)
+  jdbc {
+    jdbc_validate_connection => "true"
+        jdbc_driver_library => "D:\ELK\logstash-7.16.2\bin\ojdbc7-12.1.0.2.jar"
+        jdbc_driver_class => "Java::oracle.jdbc.driver.OracleDriver"
+        jdbc_connection_string => "jdbc:oracle:thin:@//10.36.137.96:2349/PRCP2"
+        jdbc_user => "MDM_USR"
+        jdbc_password => "Jq9v5#XP7$t"
+    statement => "select admin_client_id as id  FROM contequiv WHERE description='SK Internal' and end_dt is null"
+    # jdbc_paging_enabled => true
+    # jdbc_page_size => 10000
+    # codec => "json"
+    type => "oracle_data"
+  }
+}
+
+filter {
+  # Assuming you have a field named "id" that contains the ID values
+  
+  # Initialize an empty array to store IDs
+  ruby {
+    code => 'map["ids"] = []'
+  }
+  
+  # Add the ID to the array
+  ruby {
+    code => 'map["ids"] << event.get("id")'
+  }
+
+  # Aggregate IDs into a single list
+  aggregate {
+    task_id => "%{id}"
+    code => "map['ids'] ||= []; map['ids'] << event.get('id'); event.cancel"
+    push_map_as_event_on_timeout => true
+    timeout_task_id_field => "id"
+    timeout => 5 # Set a timeout in seconds, adjust as needed
+  }
+}
+
+output {
+  # Write the aggregated list to a file
+  file {
+    path =>"D:\ELK\logstash-7.16.2\bin\pocoutput2"
+    codec => line { format => "%{[ids]}" }
+  }
+}
