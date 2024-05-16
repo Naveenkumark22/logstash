@@ -1,0 +1,66 @@
+input {
+jdbc {
+        jdbc_validate_connection => "true"
+        jdbc_driver_library => "D:\ELK\logstash-7.16.2\bin\ojdbc7-12.1.0.2.jar"
+        jdbc_driver_class => "Java::oracle.jdbc.driver.OracleDriver"
+        jdbc_connection_string => "jdbc:oracle:thin:@//10.36.137.96:2349/PRCP2"
+        jdbc_user => "MDM_USR"
+        jdbc_password => "Jq9v5#XP7$t"
+        statement => "select a.gk_id as gkid,a.customer_id as custid,a.xpricing_profilepk_id as pkid,b.first_name as fname,b.last_name as lname,b.phone_number as phnum,b.email_id as email ,c.ADDRESS_LINE_ONE addlineone ,c.city city,c.country country from xpricingprofile a inner join xpricingprofilecontact b on b.xpricing_profile_pk_id=a.xpricing_profilepk_id inner join nniaddress c on a.xpricing_profilepk_id=c.xpricing_profile_pk_id where a.end_dt is null and ROWNUM <= 10"
+		}
+}
+
+filter{
+    mutate{
+        add_field => ["pricing_pk_id","%{pkid}"]
+        # add_field =>["load_time","%{@timestamp}"]
+        add_field => ["goldenkey","%{gkid}"] 
+        add_field => ["customerId","%{custid}"]
+        add_field => ["custname" ,"%{fname} %{lname}"]
+        add_field => ["emailId","%{email}"]
+    }
+    
+    aggregate {
+        task_id => "%{pricing_pk_id}"
+        code => "
+            map['address'] ||= []
+            add = {
+                'addresLineOne' => event.get('addlineone'),
+                'city' => event.get('city'),
+                'country' => event.get('country')
+            }
+            if !(map['address'].include?(add))
+                map['address'] << add
+            end
+            map['pricing_pk_id'] = event.get('pkid')  
+             map['goldenkey'] = event.get('gkid') # Corrected assignment here
+              map['customerId'] = event.get('custid')
+              map['custname'] = sprintf('%s %s', event.get('fname'), event.get('lname'))
+               map['emailId'] = event.get('email')
+            event.cancel()
+        "
+        push_previous_map_as_event => true
+        timeout => 3600
+        timeout_tags => ['aggregated']
+    }
+
+
+    mutate{
+        remove_field =>["gkid" , "custid" ,"pkid","fname","lname","phnum","email","addlineone","city","country","tags","@version"]
+    }
+
+}
+
+
+
+output{
+	# elasticsearch{
+	# 	 doc_id => "%{pricing_pk_id}"
+	# 	  hosts => "http://localhost:9200"
+	# 	index => "pricing_index"
+	# 	action => "create"
+	# }
+    file{
+        path =>"D:\ELK\logstash-7.16.2\bin\pricingoutput"
+    }
+}
