@@ -1,0 +1,120 @@
+Input data:
+{ "user_id": "1", "order_id": "A1", "amount": 100 }
+{ "user_id": "1", "order_id": "A2", "amount": 150 }
+{ "user_id": "2", "order_id": "B1", "amount": 200 }
+{ "user_id": "2", "order_id": "B2", "amount": 50 }
+
+code:
+
+filter {
+  aggregate {
+    task_id => "%{user_id}"
+    code => "
+      map['user_id'] ||= event.get('user_id')
+      map['total_amount'] ||= 0
+      map['order_count'] ||= 0
+      map['order_ids'] ||= []
+      map['total_amount'] += event.get('amount')
+      map['order_count'] += 1
+      map['order_ids'] << event.get('order_id')
+      event.cancel()
+    "
+    push_map_as_event_on_timeout => true
+    timeout_task_id_field => "user_id"
+
+--------------------------
+ITERATION
+
+Initial State: Empty map.
+
+After Processing Event 1 (user_id: 1, order_id: A1, amount: 100):
+
+ 
+Copy code
+{
+  "1": {
+    "user_id": "1",
+    "total_amount": 100,
+    "order_count": 1,
+    "order_ids": ["A1"]
+  }
+}
+After Processing Event 2 (user_id: 1, order_id: A2, amount: 150):
+
+ 
+Copy code
+{
+  "1": {
+    "user_id": "1",
+    "total_amount": 250,
+    "order_count": 2,
+    "order_ids": ["A1", "A2"]
+  }
+}
+After Processing Event 3 (user_id: 2, order_id: B1, amount: 200):
+
+json
+Copy code
+{
+  "1": {
+    "user_id": "1",
+    "total_amount": 250,
+    "order_count": 2,
+    "order_ids": ["A1", "A2"]
+  },
+  "2": {
+    "user_id": "2",
+    "total_amount": 200,
+    "order_count": 1,
+    "order_ids": ["B1"]
+  }
+}
+After Processing Event 4 (user_id: 2, order_id: B2, amount: 50):
+
+ 
+Copy code
+{
+  "1": {
+    "user_id": "1",
+    "total_amount": 250,
+    "order_count": 2,
+    "order_ids": ["A1", "A2"]
+  },
+  "2": {
+    "user_id": "2",
+    "total_amount": 250,
+    "order_count": 2,
+    "order_ids": ["B1", "B2"]
+  }
+}
+
+    timeout => 5
+    timeout_tags => ["aggregated"]
+  }
+}
+
+--------------------------------------------------
+-->Here we are using the user id to aggregate
+
+while aggregate the map will created
+
+    task_id => "%{user_id}"  ---> this line checks whether the userid alreadybexists or not
+    
+if the user id is new and present in the map it execute all the below lines
+
+map['user_id'] ||= event.get('user_id')              ----> creates afield insisde a map  and put user id into it 
+      map['total_amount'] ||= 0                    ----declaring total amount field
+      map['order_count'] ||= 0                          ------->creating count field 
+      map['order_ids'] ||= []                          -------- creating order ids as list field (array field)
+      map['total_amount'] += event.get('amount')         
+      map['order_count'] += 1
+      map['order_ids'] << event.get('order_id')
+
+
+if the user id is  present it skips the initialization part and continue with  below lines
+
+map['total_amount'] += event.get('amount')         
+      map['order_count'] += 1
+      map['order_ids'] << event.get('order_id')
+
+
