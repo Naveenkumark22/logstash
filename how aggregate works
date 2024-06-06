@@ -113,6 +113,40 @@ map['user_id'] ||= event.get('user_id')              ----> creates afield insisd
 
 if the user id is  present it skips the initialization part and continue with  below lines
 
+
+
+===================================
+another code
+
+
+  aggregate {
+    task_id => "%{data['user_id']}"
+    code => "
+      map['user_id'] ||= event.get('user_id')
+      map['total_amount'] ||= 0
+      map['order_count'] ||= 0
+      map['order_ids'] ||= []
+
+      if map['user_id'] == event.get('user_id')
+        map['total_amount'] += event.get('amount')
+        map['order_count'] += 1
+        map['order_ids'] << event.get('order_id')
+      else
+        event.cancel()
+        map['user_id'] = event.get('user_id')
+        map['total_amount'] = event.get('amount')
+        map['order_count'] = 1
+        map['order_ids'] = [event.get('order_id')]
+      end
+    "
+    push_map_as_event_on_timeout => true
+    timeout_task_id_field => "user_id"
+    timeout => 5
+    timeout_tags => ["aggregated"]
+  }
+}
+
+
 map['total_amount'] += event.get('amount')         
       map['order_count'] += 1
       map['order_ids'] << event.get('order_id')
