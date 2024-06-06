@@ -1,0 +1,47 @@
+input {
+jdbc {
+        jdbc_validate_connection => "true"
+        jdbc_driver_library => "D:\ELK\logstash-7.16.2\bin\ojdbc7-12.1.0.2.jar"
+        jdbc_driver_class => "Java::oracle.jdbc.driver.OracleDriver"
+        jdbc_connection_string => "jdbc:oracle:thin:@//10.36.137.96:2349/PRCP2"
+        jdbc_user => "MDM_USR"
+        jdbc_password => "Jq9v5#XP7$t"
+        statement => "select IDENTIFIER_ID  identifier,ID_STATUS_TP_CD  statustp ,CONT_ID  contid,ID_TP_CD idtp,REF_NUM  refnum,LAST_UPDATE_USER lastuser from identifier where cont_id in (select cont_id from(select cont_id ,row_number() over (partition by cont_id order by last_update_dt desc) rn  from identifier) where rownum<2000 and rn=1)"		}
+}
+
+filter{
+    aggregate{
+        "task_id"=>"%{contid}"
+code=> "
+    map['CONT_ID'] ||=event.get('contid')
+    map['IDENTIFIER'] ||=[]
+    add = {
+    'ID_STATUS_TP_CD' => event.get('statustp'),
+    'ID_TP_CD' => event.get('idtp'),
+    'REF_NUM' => event.get('refnum')
+    }
+    if !(map['IDENTIFIER']).include?add
+         map['IDENTIFIER'] << add
+    end
+    event.cancel()
+"
+        push_previous_map_as_event => true
+        timeout => 3600
+        timeout_tags => ['aggregated']
+    }
+    mutate{ 
+        remove_field =>["tags","@version","contid","identifier","statustp","idtp","lastuser","refnum"]
+    }
+}
+
+output{
+	# elasticsearch{
+	# 	 doc_id => "%{pricing_pk_id}"
+	# 	  hosts => "http://localhost:9200"
+	# 	index => "pricing_index"
+	# 	action => "create"
+	# }
+    file{
+        path =>"D:\ELK\logstash-7.16.2\bin\identifieroutput"
+    }
+}
