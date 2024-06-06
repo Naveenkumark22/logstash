@@ -1,0 +1,32 @@
+
+filter {
+  alter {
+    # Add a new field based on an existing field
+    add_field => { "new_field" => "value" }
+
+    # Remove a field
+    remove_field => ["field_to_remove"]
+
+    # Rename a field
+    rename_field => { "old_field" => "new_field" }
+
+    # Update a field's value
+    update => { "field_to_update" => "new_value" }
+
+    # Convert a field to a different data type
+    convert => { "field_to_convert" => "integer" }
+
+    # Copy a field to a new field
+    copy => { "source_field" => "destination_field" }
+
+    # Replace a field's value with a new value if a condition is met
+    replace => { "field_to_replace" => { "old_value" => "new_value" } }
+
+    # Include only specific fields in the event
+    include_fields => ["field1", "field2"]
+
+    # Exclude specific fields from the event
+    exclude_fields => ["field3", "field4"]
+  }
+}
+
