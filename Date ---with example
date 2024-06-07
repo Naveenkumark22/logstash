@@ -1,0 +1,87 @@
+ISO 8601 date/time format (e.g., "2022-06-15T13:30:00"):
+
+match => ["timestamp", "ISO8601"]
+Date in "YYYY-MM-DD" format (e.g., "2022-06-15"):
+------------------------
+
+match => ["timestamp", "yyyy-MM-dd"]
+Date/time with milliseconds (e.g., "2022-06-15 13:30:00.123"):
+
+------------------------------
+match => ["timestamp", "yyyy-MM-dd HH:mm:ss.SSS"]
+Date/time with timezone offset (e.g., "2022-06-15 13:30:00 +0300"):
+
+---------------------------------------
+match => ["timestamp", "yyyy-MM-dd HH:mm:ss Z"]
+Date in "DD/MMM/YYYY:HH:mm
+" format (e.g., "15/Jun/2022:13:30:00"):
+
+---------------------------------
+match => ["timestamp", "dd/MMM/YYYY:HH:mm:ss"]
+Custom date format with weekday (e.g., "Wed Jun 15 13:30:00 2022"):
+
+---------------------------------------
+match => ["timestamp", "EEE MMM dd HH:mm:ss YYYY"]
+
+
+===============================================================================
+Sample CSV input (sample.csv):
+
+**********************
+id,name,timestamp
+1,Alice,2024-06-15T13:30:00
+2,Bob,2024-06-16T14:45:00
+3,Charlie,2024-06-17T16:00:00
+Logstash configuration (config.conf):
+
+******************
+input {
+    file {
+        path => "path/to/sample.csv"
+        start_position => "beginning"
+        sincedb_path => "path/to/sincedb_file"
+        codec => "json"
+    }
+}
+
+filter {
+    csv {
+        separator => ","
+        columns => ["id", "name", "timestamp"]
+    }
+    
+    date {
+        match => ["timestamp", "ISO8601"]
+        target => "@timestamp"
+    }
+}
+
+output {
+    stdout { codec => rubydebug }
+}
+To run this configuration, use the following command:
+
+****************
+Expected output:
+
+
+{
+    "id" => "1",
+    "name" => "Alice",
+    "timestamp" => "2024-06-15T13:30:00",
+    "@timestamp" => 2024-06-15T13:30:00.000Z
+}
+{
+    "id" => "2",
+    "name" => "Bob",
+    "timestamp" => "2024-06-16T14:45:00",
+    "@timestamp" => 2024-06-16T14:45:00.000Z
+}
+{
+    "id" => "3",
+    "name" => "Charlie",
+    "timestamp" => "2024-06-17T16:00:00",
+    "@timestamp" => 2024-06-17T16:00:00.000Z
+}
+
+
