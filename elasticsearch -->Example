@@ -1,0 +1,40 @@
+The elasticsearch filter plugin in Logstash allows you to query an Elasticsearch cluster to fetch additional data that can be used to enrich or transform your events. Here's an example of how to use the elasticsearch filter plugin:
+
+=========
+
+{ "id": "1" }
+{ "id": "2" }
+{ "id": "3" }
+
+=======
+
+input {
+  stdin {}
+}
+
+filter {
+  elasticsearch {
+    hosts => ["http://localhost:9200"]
+    index => "my_index"
+    query => '{ "query": { "match": { "id": "%{id}" } } }'
+    fields => { "name" => "name" }
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+}
+=========
+
+{
+  "id": "1",
+  "name": "John Doe"
+}
+{
+  "id": "2",
+  "name": "Jane Smith"
+}
+{
+  "id": "3",
+  "name": "Alice Johnson"
+}
