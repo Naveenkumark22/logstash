@@ -1,0 +1,28 @@
+The drop filter plugin in Logstash is used to drop (discard) events that meet certain conditions. It's commonly used to filter out unwanted events based on specific criteria.
+
+
+
+{
+  "status": "error",
+  "message": "An error occurred"
+}
+
+__________
+
+input {
+  stdin {}
+}
+
+filter {
+  if [status] == "error" {
+    drop {}
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+}
+
+__________
+
+event deleted
