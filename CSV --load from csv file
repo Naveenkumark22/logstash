@@ -1,0 +1,30 @@
+input {
+    file {
+        path => "D:/ELK/logstash-7.16.2/csvsample.csv"
+        start_position => "beginning"
+        sincedb_path => "D:/ELK/logstash-7.16.2/sincedb_file"
+    }
+}
+
+filter {
+    csv {
+        separator => ","
+        columns => ["id", "orgname", "personname", "amount", "place", "section"]
+    }
+    mutate {
+        convert => {
+            "id" => "integer"
+            "orgname" => "string"  
+            "personname" => "string"
+            "amount" => "float"    
+            "place" => "string"
+            "section" => "string"
+        }
+    }
+}
+
+output {
+    file {
+        path => "D:/ELK/logstash-7.16.2/bin/csvoutput1"
+    }
+}
