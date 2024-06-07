@@ -1,0 +1,25 @@
+The extract_numbers filter plugin in Logstash is used to extract numbers from a specified field and store them in a new field. Here's an example configuration:
+
+========
+{ "message": "There are 123 apples and 456 oranges" }
+
+===========
+input {
+  stdin {}
+}
+
+filter {
+  extract_numbers {
+    field => "message"
+    target => "numbers"
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+}
+===============
+{
+  "message": "There are 123 apples and 456 oranges",
+  "numbers": [123, 456]
+}
