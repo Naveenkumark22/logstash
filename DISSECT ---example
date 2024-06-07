@@ -1,0 +1,38 @@
+The dissect filter plugin in Logstash is used to extract structured fields from a message without using regular expressions. It works by splitting the message into parts based on a specified pattern and assigning those parts to specified field names.
+
+Here's a basic example to illustrate the usage of the dissect filter plugin:
+===================
+Sample Input:
+Consider the following input message:
+
+2024-06-18 12:30:45,123 [INFO] [main] com.example.MyClass - Message: User logged in
+====================
+code
+
+input {
+  stdin {}
+}
+
+filter {
+  dissect {
+    mapping => {
+      "message" => "%{timestamp} [%{log_level}] [%{thread}] %{class} - Message: %{log_message}"
+    }
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+}
+
+==========================
+OUTPUT
+
+{
+  "timestamp": "2024-06-18 12:30:45,123",
+  "log_level": "INFO",
+  "thread": "main",
+  "class": "com.example.MyClass",
+  "log_message": "User logged in",
+  "message": "2024-06-18 12:30:45,123 [INFO] [main] com.example.MyClass - Message: User logged in"
+}
