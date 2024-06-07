@@ -1,0 +1,57 @@
+Sample data (data1.log):
+ 
+{"message": "Event from data1", "source": "data1"}
+{"message": "Another event from data1", "source": "data1"}
+
+
+Sample data (data2.log):
+ 
+{"message": "Event from data2", "source": "data2"}
+{"message": "Another event from data2", "source": "data2"}
+
+
+
+input {
+  file {
+    path => "/path/to/data1.log"
+    start_position => "beginning"
+    sincedb_path => "/dev/null"
+    codec => json
+    type => "data1"
+  }
+  file {
+    path => "/path/to/data2.log"
+    start_position => "beginning"
+    sincedb_path => "/dev/null"
+    codec => json
+    type => "data2"
+  }
+}
+
+filter {
+  # Clone events from data1
+  if [type] == "data1" {
+    clone {
+      clones => ["data1_clone"]
+    }
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+  
+  # Handle original events from data1
+  if [type] == "data1" and !("data1_clone" in [tags]) {
+    # Your processing logic for events from data1
+  }
+
+  # Handle cloned events from data1
+  if "data1_clone" in [tags] {
+    # Your processing logic for cloned events from data1
+  }
+
+  # Handle events from data2
+  if [type] == "data2" {
+    # Your processing logic for events from data2
+  }
+}
