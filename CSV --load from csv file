@@ -28,3 +28,59 @@ output {
         path => "D:/ELK/logstash-7.16.2/bin/csvoutput1"
     }
 }
+
+
+------------------------------------------------------------------------------------------------------
+input {
+    file {
+        path => "D:/ELK/logstash-7.16.2/csvsample.csv"
+        start_position => "beginning"
+        sincedb_path => "D:/ELK/logstash-7.16.2/sincedb_file"
+    }
+}
+
+filter {
+    csv {
+        separator => ","
+        columns => ["id", "orgname", "personname", "amount", "place", "section"]
+        skip_header => true
+    }
+
+    # Convert 'id' to integer and 'amount' to float
+    mutate {
+        convert => {
+            "id" => "integer"
+            "amount" => "float"
+        }
+    }
+
+    # Remove leading and trailing whitespaces from 'orgname'
+    mutate {
+        gsub => ["orgname", "\A\s+", ""]
+        gsub => ["orgname", "\s+\z", ""]
+    }
+
+    # Rename 'section' to 'department'
+    mutate {
+        rename => {
+            "section" => "department"
+        }
+    }
+
+    # Split 'place' field into an array based on comma separator
+    mutate {
+        split => { "place" => "," }
+    }
+
+    # Convert 'place' array elements to uppercase
+    mutate {
+        uppercase => ["place"]
+    }
+}
+
+output {
+    file {
+        path => "D:/ELK/logstash-7.16.2/bin/csvoutput1.csv"
+        codec => line { format => "%{id},%{orgname},%{personname},%{amount},%{place},%{department}" }
+    }
+}
