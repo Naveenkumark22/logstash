@@ -1,0 +1,51 @@
+The elapsed filter plugin in Logstash is used to calculate the time elapsed between two events based on a common field value in those events. It's commonly used to measure the time taken for a process to complete or to identify long-running processes.
+
+================================
+SAMPLE INPUT:
+
+{ "session_id": "session1", "event": "start", "timestamp": "2024-06-25T10:15:00.000Z" }
+{ "session_id": "session2", "event": "start", "timestamp": "2024-06-25T10:20:00.000Z" }
+{ "session_id": "session1", "event": "end", "timestamp": "2024-06-25T10:25:00.000Z" }
+{ "session_id": "session2", "event": "end", "timestamp": "2024-06-25T10:30:00.000Z" }
+
+====================================
+input {
+  stdin {}
+}
+
+filter {
+  date {
+    match => [ "timestamp", "ISO8601" ]
+  }
+
+  if [event] == "start" {
+    elapsed {
+      unique_id_field => "session_id"
+      start_tag => "start"
+      end_tag => "end"
+      timeout => 60
+      new_event_on_match => false
+    }
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+}
+
+================================================
+OUTPUT:
+
+
+{
+  "session_id": "session1",
+  "event": "start",
+  "timestamp": "2024-06-25T10:15:00.000Z",
+  "elapsed_time": 300
+}
+{
+  "session_id": "session2",
+  "event": "start",
+  "timestamp": "2024-06-25T10:20:00.000Z",
+  "elapsed_time": 300
+}
